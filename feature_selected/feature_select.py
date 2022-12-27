@@ -86,11 +86,9 @@ testservice= dataset_test['service'].tolist()
 difference=list(set(trainservice) - set(testservice))
 string = 'service_'
 difference=[string + x for x in difference]
-# print(difference)
+
 for col in difference:
     dataset_test_cat_data[col] = 0
-# print(dataset_train_cat_data.shape)
-# print(dataset_test_cat_data.shape)
 
 # Join encoded categorical dataframe with the non-categorical dataframe
 #Join encoded categorical dataframe with the non-categorical dataframe
@@ -122,6 +120,12 @@ newlabeldf_test=labeldf_test.replace({ 'normal' : 0, 'neptune' : 1 ,'back': 1, '
                            'ipsweep' : 2,'nmap' : 2,'portsweep' : 2,'satan' : 2,'mscan' : 2,'saint' : 2
                            ,'ftp_write': 3,'guess_passwd': 3,'imap': 3,'multihop': 3,'phf': 3,'spy': 3,'warezclient': 3,'warezmaster': 3,'sendmail': 3,'named': 3,'snmpgetattack': 3,'snmpguess': 3,'xlock': 3,'xsnoop': 3,'httptunnel': 3,
                            'buffer_overflow': 4,'loadmodule': 4,'perl': 4,'rootkit': 4,'ps': 4,'sqlattack': 4,'xterm': 4})
+
+print(newlabeldf)
+print()
+print(newlabeldf_test)
+
+"""
 # put the new label column back
 newdf['label'] = newlabeldf
 newdf_test['label'] = newlabeldf_test
@@ -423,3 +427,4 @@ plt.ylabel("Cross validation score (nb of correct classifications)")
 plt.title('RFECV U2R')
 plt.plot(range(1, len(rfecv_U2R.grid_scores_) + 1), rfecv_U2R.grid_scores_)
 plt.savefig('feature_selected\RFECV U2R.png')
+"""

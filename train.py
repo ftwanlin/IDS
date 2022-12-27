@@ -224,7 +224,9 @@ outcomes = dummies.columns
 num_classes = len(outcomes)
 y_train_1 = dummies.values
 
-history = model_lstm.fit(x_train_1, y_train_1, epochs=10, batch_size=64)
+print(x_train_1.shape, y_train_1.shape)
+
+history = model_lstm.fit(x_train_1, y_train_1, epochs=20, batch_size=64)
 
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, recall_score, precision_score, f1_score
 from sklearn import preprocessing
