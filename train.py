@@ -5,6 +5,7 @@ from keras.layers import Dense, Dropout
 from keras.layers import LSTM, Convolution1D, MaxPooling1D
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
+from keras.models import load_model
 
 # Loading training set into dataframe
 train_df = pd.read_csv('data/KDDTrain+.csv')
@@ -123,6 +124,13 @@ for item in tmp:
         classlist_train.append("Normal")
         NormalCount_train = NormalCount_train + 1
 
+print("DoS_Train: ", DoSCount_train)
+print("Probe_Train: ", ProbeCount_train)
+print("U2R_Train: ", U2RCount_train)
+print("R2L_Train: ", R2LCount_train)
+print("Normal_Train: ", NormalCount_train)
+print("\n")
+
 # Fixing labels for testing set
 classlist_test = []
 check1_test = (
@@ -156,11 +164,11 @@ for item in tmp1:
         classlist_test.append("Normal")
         NormalCount_test = NormalCount_test + 1
 
-print("Normal: ", NormalCount_test)
-print("DoS: ", DoSCount_test)
-print("Probe: ", ProbeCount_test)
-print("U2R: ", U2RCount_test)
-print("R2L: ", R2LCount_test)
+print("DoS_Test: ", DoSCount_test)
+print("Probe_Test: ", ProbeCount_test)
+print("U2R_Test: ", U2RCount_test)
+print("R2L_Test: ", R2LCount_test)
+print("Normal_Test: ", NormalCount_test)
 print('\n')
 
 # Appending class column to training set
@@ -176,36 +184,6 @@ y_test = test_df_2['Class']
 
 X_train = train_df_2.drop('Class', 1)
 X_test = test_df_2.drop('Class', 1)
-
-def create_lstm_model(input_shape, num_classes):
-    model = Sequential()
-
-    model.add(Convolution1D(64, 3, padding="same", activation="relu", input_shape=input_shape))
-    model.add(Convolution1D(64, 3, padding="same", activation="relu"))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(Convolution1D(128, 3, padding="same", activation="relu"))
-    model.add(Convolution1D(128, 3, padding="same", activation="relu"))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(LSTM(64, return_sequences=True))
-    model.add(Dropout(0.1))
-    model.add(LSTM(64, return_sequences=False))
-    model.add(Dropout(0.1))
-    model.add(Dense(48, activation='relu'))
-    model.add(Dropout(0.1))
-    model.add(Dense(48, activation='relu'))
-    model.add(Dropout(0.1))
-    model.add(Dense(num_classes, activation='softmax'))
-
-    return model
-
-
-input_shape = (122, 1)
-num_classes = 5
-model_lstm = create_lstm_model(input_shape, num_classes)
-# define optimizer and objective, compile lstm
-model_lstm.compile(loss="categorical_crossentropy", optimizer="adam", metrics=['accuracy'])
-
-model_lstm.summary()
 
 # Split data: 75% training and 25% testing
 train_X, test_X, train_y, test_y = train_test_split(X_train, y_train, test_size=0.25, random_state=101)
@@ -224,9 +202,49 @@ outcomes = dummies.columns
 num_classes = len(outcomes)
 y_train_1 = dummies.values
 
-print(x_train_1.shape, y_train_1.shape)
+try:
+    model_lstm = load_model('lstm_model.h5')
+except:
 
-history = model_lstm.fit(x_train_1, y_train_1, epochs=20, batch_size=64)
+    input_shape = (122, 1)
+    num_classes = 5
+
+    def create_lstm_model(input_shape, num_classes):
+        model = Sequential()
+
+        model.add(Convolution1D(64, 3, padding="same", activation="relu", input_shape=input_shape))
+        model.add(Convolution1D(64, 3, padding="same", activation="relu"))
+        model.add(MaxPooling1D(pool_size=2))
+        model.add(Convolution1D(128, 3, padding="same", activation="relu"))
+        model.add(Convolution1D(128, 3, padding="same", activation="relu"))
+        model.add(MaxPooling1D(pool_size=2))
+        model.add(LSTM(64, return_sequences=True))
+        model.add(Dropout(0.1))
+        model.add(LSTM(64, return_sequences=False))
+        model.add(Dropout(0.1))
+        model.add(Dense(48, activation='relu'))
+        model.add(Dropout(0.1))
+        model.add(Dense(48, activation='relu'))
+        model.add(Dropout(0.1))
+        model.add(Dense(num_classes, activation='softmax'))
+
+        return model
+
+    model_lstm = create_lstm_model(input_shape, num_classes)
+
+    model_lstm.compile(loss="categorical_crossentropy", optimizer="adam", metrics=['accuracy'])
+    model_lstm.summary()
+    history = model_lstm.fit(x_train_1, y_train_1, epochs=20, batch_size=64)
+
+    # save model
+    model_lstm.save('lstm_model.h5')
+
+    json_string = model_lstm.to_json()
+    import json
+
+    with open('lstm_model.json', 'w') as f:
+        json.dump(json_string, f)
+
 
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, recall_score, precision_score, f1_score
 from sklearn import preprocessing
@@ -250,7 +268,7 @@ print("precision : ", precision)
 f1_scr = f1_score(y_eval, pred, average='weighted', zero_division=0)
 print("f1_score : ", f1_scr)
 
-print("####   0:Dos  1:normal  2:Probe  3:R2L  4:U2L  ###\n\n")
+print("####   0:Dos  1:normal  2:Probe  3:R2L  4:U2R  ###\n\n")
 print(classification_report(y_eval, pred, zero_division=0))
 
 cm = confusion_matrix(y_eval, pred2)
